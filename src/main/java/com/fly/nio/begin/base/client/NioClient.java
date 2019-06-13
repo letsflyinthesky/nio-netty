@@ -77,7 +77,7 @@ public class NioClient {
     }
 
     private void finishConnect(SelectionKey key) {
-//        SocketChannel channel = (SocketChannel) selectionKey.channel();
+        //        SocketChannel channel = (SocketChannel) selectionKey.channel();
         try {
 
             if (!socketChannel.finishConnect()) {
@@ -95,11 +95,16 @@ public class NioClient {
 //            socketChannel.register(selector, SelectionKey.OP_READ);
 
 
+            //大家可能比较疑惑为什么这里使用的是成员变量selectionKey而不是传入的key，其实很简单，因为这两个是一样的
             //或者，我们使用另外一种方法
             int ops = selectionKey.interestOps();
             if ((ops & SelectionKey.OP_READ) == 0) {
                 selectionKey.interestOps(ops | SelectionKey.OP_READ);
             }
+
+            //这里调用wakeup，可以使下一次调用selector.select(timeout)直接返回，因为本次wakeup调用将作用于下一次select——有“记忆”作用。
+            //另外，两次成功的select之间多次调用wakeup等价于一次调用。
+            selector.wakeup();
 
         } catch (IOException e) {
             logger.error("连接异常");
